@@ -79,20 +79,4 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
-    <<: *default
-    database: preferred_deals_api_production
-    username: preferred_deals_api
-    password: <%= ENV["PREFERRED_DEALS_API_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: preferred_deals_api_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: preferred_deals_api_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: preferred_deals_api_production_cable
-    migrations_paths: db/cable_migrate
+  url: <%= ENV['DATABASE_URL'] || "postgresql://preferred_deals_api:#{ENV["PREFERRED_DEALS_API_DATABASE_PASSWORD"]}@localhost/preferred_deals_api_production" %>

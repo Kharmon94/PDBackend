@@ -6,13 +6,12 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "bundle exec rails db:migrate && bundle exec rails db:seed && bundle exec rails server -b 0.0.0.0 -p $PORT"
+startCommand = "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p $PORT"
 healthcheckPath = "/up"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
 [env]
 RAILS_ENV = "production"
 RAILS_SERVE_STATIC_FILES = "true"
-DATABASE_URL = "${{DATABASE_URL}}"
-SECRET_KEY_BASE = "${{SECRET_KEY_BASE}}"
+# DATABASE_URL and SECRET_KEY_BASE should be set in Railway dashboard
