@@ -1,0 +1,18 @@
+# Railway configuration for Rails API backend
+# This uses the existing Dockerfile in the preferred_deals_api directory
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "bundle exec rails db:migrate && bundle exec rails db:seed && bundle exec rails server -b 0.0.0.0 -p $PORT"
+healthcheckPath = "/up"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+
+[env]
+RAILS_ENV = "production"
+RAILS_SERVE_STATIC_FILES = "true"
+DATABASE_URL = "${{DATABASE_URL}}"
+SECRET_KEY_BASE = "${{SECRET_KEY_BASE}}"
