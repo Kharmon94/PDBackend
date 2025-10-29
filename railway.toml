@@ -6,7 +6,7 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p $PORT"
+startCommand = "sh -c 'until bundle exec rails db:prepare; do echo \"Waiting for database...\"; sleep 2; done && bundle exec rails server -b 0.0.0.0 -p $PORT'"
 healthcheckPath = "/up"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
