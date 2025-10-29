@@ -1,4 +1,5 @@
 class Api::V1::BusinessesController < ApplicationController
+  skip_before_action :authenticate_user!, only: [:index, :show, :track_click]
   before_action :authenticate_user!, only: [:create, :update, :destroy, :my_businesses]
   before_action :set_business, only: [:show, :update, :destroy]
   
