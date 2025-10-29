@@ -1,24 +1,21 @@
-# Create sample users
-admin_user = User.create!(
-  name: "Admin User",
-  email: "admin@preferreddeals.com",
-  password: "password123",
-  user_type: "admin"
-)
+# Create sample users (only if they don't exist)
+admin_user = User.find_or_create_by!(email: "admin@preferreddeals.com") do |user|
+  user.name = "Admin User"
+  user.password = "password123"
+  user.user_type = "admin"
+end
 
-regular_user = User.create!(
-  name: "John Doe",
-  email: "john@example.com",
-  password: "password123",
-  user_type: "user"
-)
+regular_user = User.find_or_create_by!(email: "john@example.com") do |user|
+  user.name = "John Doe"
+  user.password = "password123"
+  user.user_type = "user"
+end
 
-partner_user = User.create!(
-  name: "Jane Smith",
-  email: "jane@example.com",
-  password: "password123",
-  user_type: "partner"
-)
+partner_user = User.find_or_create_by!(email: "jane@example.com") do |user|
+  user.name = "Jane Smith"
+  user.password = "password123"
+  user.user_type = "partner"
+end
 
 # Create sample businesses
 businesses_data = [
@@ -106,7 +103,12 @@ businesses_data = [
 ]
 
 businesses_data.each do |business_data|
-  Business.create!(business_data.merge(user: partner_user))
+  Business.find_or_create_by!(name: business_data[:name]) do |business|
+    business_data.each do |key, value|
+      business.send("#{key}=", value) if business.respond_to?("#{key}=")
+    end
+    business.user = partner_user
+  end
 end
 
 puts "Seed data created successfully!"
