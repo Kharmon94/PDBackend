@@ -7,17 +7,7 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    # Allow all origins (you can restrict this later if needed)
-    origins '*'
-
-    resource "*",
-      headers: :any,
-      methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      credentials: false
-  end
-  
-  # Separate block for domains that need credentials
-  allow do
+    # Allow specific domains with credentials
     origins 'https://www.preferred.deals', 
             'https://preferred.deals',
             'http://localhost:3000', 
@@ -28,6 +18,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     resource "*",
       headers: :any,
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      credentials: true
+      credentials: true,
+      expose: ['Authorization']
   end
 end
