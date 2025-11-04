@@ -7,18 +7,17 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    # Allow specific domains with credentials
+    # Allow all Railway and production domains
     origins 'https://www.preferred.deals', 
             'https://preferred.deals',
             'http://localhost:3000', 
             'http://localhost:5173',
-            /.*\.railway\.app$/,
-            /.*\.railway\.dev$/
+            /https:\/\/.*\.railway\.app$/,
+            /https:\/\/.*\.railway\.dev$/,
+            /https:\/\/.*\.up\.railway\.app$/
 
     resource "*",
       headers: :any,
-      methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      credentials: true,
-      expose: ['Authorization']
+      methods: [:get, :post, :put, :patch, :delete, :options, :head]
   end
 end
