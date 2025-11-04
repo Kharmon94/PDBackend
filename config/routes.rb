@@ -27,6 +27,16 @@ Rails.application.routes.draw do
       # Saved deals routes
       resources :saved_deals, only: [:index, :create, :destroy]
       post 'saved_deals/toggle', to: 'saved_deals#toggle'
+      
+      # Admin routes
+      namespace :admin do
+        get 'stats', to: 'admin#stats'
+        get 'users', to: 'admin#users'
+        get 'businesses', to: 'admin#businesses'
+        patch 'businesses/:id/feature', to: 'admin#toggle_featured'
+        delete 'users/:id', to: 'admin#destroy_user'
+        delete 'businesses/:id', to: 'admin#destroy_business'
+      end
     end
   end
 
