@@ -1,5 +1,6 @@
 class Business < ApplicationRecord
   belongs_to :user
+  belongs_to :approved_by, class_name: 'User', optional: true
   has_many :saved_deals, dependent: :destroy
   has_many :saved_by_users, through: :saved_deals, source: :user
   has_many :analytics, dependent: :destroy
@@ -9,10 +10,13 @@ class Business < ApplicationRecord
   validates :address, presence: true
   validates :rating, numericality: { in: 0..5 }
   validates :review_count, numericality: { greater_than_or_equal_to: 0 }
+  validates :approval_status, inclusion: { in: %w[pending approved rejected] }
   
   scope :featured, -> { where(featured: true) }
   scope :with_deals, -> { where(has_deals: true) }
   scope :by_category, ->(category) { where(category: category) }
+  scope :pending_approval, -> { where(approval_status: 'pending') }
+  scope :approved, -> { where(approval_status: 'approved') }
   
   def increment_view_count!
     analytics.create!(event_type: 'view', event_data: { timestamp: Time.current })

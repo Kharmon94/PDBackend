@@ -2,6 +2,8 @@ class Api::V1::SavedDealsController < ApplicationController
   before_action :authenticate_user!
   
   def index
+    # Users can only see their own saved deals
+    authorize! :read, SavedDeal
     saved_deals = current_user.saved_deals.includes(:business)
     businesses = saved_deals.map(&:business)
     
@@ -11,6 +13,7 @@ class Api::V1::SavedDealsController < ApplicationController
   def create
     business = Business.find(params[:business_id])
     saved_deal = current_user.saved_deals.build(business: business)
+    authorize! :create, saved_deal
     
     if saved_deal.save
       render json: { message: 'Deal saved successfully!' }
@@ -22,7 +25,9 @@ class Api::V1::SavedDealsController < ApplicationController
   def destroy
     saved_deal = current_user.saved_deals.find_by(business_id: params[:business_id])
     
-    if saved_deal&.destroy
+    if saved_deal
+      authorize! :destroy, saved_deal
+      saved_deal.destroy
       render json: { message: 'Deal removed successfully!' }
     else
       render json: { error: 'Deal not found' }, status: :not_found
@@ -34,10 +39,13 @@ class Api::V1::SavedDealsController < ApplicationController
     saved_deal = current_user.saved_deals.find_by(business: business)
     
     if saved_deal
+      authorize! :destroy, saved_deal
       saved_deal.destroy
       render json: { saved: false, message: 'Deal removed successfully!' }
     else
-      current_user.saved_deals.create!(business: business)
+      new_saved_deal = current_user.saved_deals.build(business: business)
+      authorize! :create, new_saved_deal
+      new_saved_deal.save!
       render json: { saved: true, message: 'Deal saved successfully!' }
     end
   end

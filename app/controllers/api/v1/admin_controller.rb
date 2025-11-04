@@ -1,7 +1,6 @@
 class Api::V1::AdminController < ApplicationController
-  include Authorization
   before_action :authenticate_user!
-  before_action :require_admin!
+  before_action :check_admin_access
 
   # GET /api/v1/admin/stats
   def stats
@@ -118,7 +117,71 @@ class Api::V1::AdminController < ApplicationController
     render json: { message: 'Business deleted successfully' }
   end
 
+  # GET /api/v1/admin/pending_approvals
+  def pending_approvals
+    businesses = Business.pending_approval.includes(:user).order(created_at: :desc)
+    
+    render json: {
+      businesses: businesses.map { |business| business_json(business) },
+      count: businesses.count
+    }
+  end
+
+  # PATCH /api/v1/admin/businesses/:id/approve
+  def approve_business
+    business = Business.find(params[:id])
+    business.update!(
+      approval_status: 'approved',
+      approved_at: Time.current,
+      approved_by: current_user
+    )
+    
+    render json: { 
+      message: 'Business approved successfully',
+      business: business_json(business)
+    }
+  end
+
+  # PATCH /api/v1/admin/businesses/:id/reject
+  def reject_business
+    business = Business.find(params[:id])
+    business.update!(approval_status: 'rejected')
+    
+    render json: { message: 'Business rejected' }
+  end
+
+  # PATCH /api/v1/admin/users/:id/suspend
+  def suspend_user
+    user = User.find(params[:id])
+    
+    if user.id == current_user.id
+      render json: { error: 'Cannot suspend your own account' }, status: :unprocessable_entity
+      return
+    end
+    
+    user.suspend!(current_user)
+    render json: { 
+      message: 'User suspended successfully',
+      user: user_json(user)
+    }
+  end
+
+  # PATCH /api/v1/admin/users/:id/activate
+  def activate_user
+    user = User.find(params[:id])
+    user.activate!
+    
+    render json: { 
+      message: 'User activated successfully',
+      user: user_json(user)
+    }
+  end
+
   private
+  
+  def check_admin_access
+    authorize! :manage, :admin_panel
+  end
 
   def user_json(user)
     {
@@ -128,7 +191,9 @@ class Api::V1::AdminController < ApplicationController
       user_type: user.user_type,
       created_at: user.created_at,
       businesses_count: user.businesses.count,
-      saved_deals_count: user.saved_deals.count
+      saved_deals_count: user.saved_deals.count,
+      suspended: user.suspended,
+      suspended_at: user.suspended_at
     }
   end
 

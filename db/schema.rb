@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_20_000004) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_04_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,6 +45,10 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_20_000004) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "approval_status", default: "approved"
+    t.datetime "approved_at"
+    t.integer "approved_by_id"
+    t.index ["approval_status"], name: "index_businesses_on_approval_status"
     t.index ["category"], name: "index_businesses_on_category"
     t.index ["featured"], name: "index_businesses_on_featured"
     t.index ["has_deals"], name: "index_businesses_on_has_deals"
@@ -68,11 +72,35 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_20_000004) do
     t.string "user_type", default: "user"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "suspended", default: false
+    t.datetime "suspended_at"
+    t.integer "suspended_by_id"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["suspended"], name: "index_users_on_suspended"
+  end
+
+  create_table "white_labels", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "domain"
+    t.string "subdomain"
+    t.string "brand_name"
+    t.string "logo_url"
+    t.string "primary_color"
+    t.string "secondary_color"
+    t.text "custom_css"
+    t.json "settings"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["domain"], name: "index_white_labels_on_domain", unique: true
+    t.index ["subdomain"], name: "index_white_labels_on_subdomain", unique: true
+    t.index ["user_id"], name: "index_white_labels_on_user_id"
   end
 
   add_foreign_key "analytics", "businesses"
   add_foreign_key "businesses", "users"
+  add_foreign_key "businesses", "users", column: "approved_by_id"
   add_foreign_key "saved_deals", "businesses"
   add_foreign_key "saved_deals", "users"
+  add_foreign_key "users", "users", column: "suspended_by_id"
+  add_foreign_key "white_labels", "users"
 end

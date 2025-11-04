@@ -1,7 +1,10 @@
 class Api::V1::BusinessesController < ApplicationController
   skip_before_action :authenticate_user!, only: [:index, :show, :track_click]
-  before_action :authenticate_user!, only: [:create, :update, :destroy, :my_businesses]
-  before_action :set_business, only: [:show, :update, :destroy]
+  before_action :authenticate_user!, only: [:create, :update, :destroy, :my_businesses, :analytics]
+  before_action :set_business, only: [:show, :update, :destroy, :analytics]
+  
+  # CanCanCan authorization
+  load_and_authorize_resource except: [:index, :track_click, :my_businesses, :analytics]
   
   def index
     businesses = Business.includes(:user)
@@ -43,6 +46,7 @@ class Api::V1::BusinessesController < ApplicationController
   end
   
   def update
+    authorize! :update, @business
     if @business.update(business_params)
       render json: business_json(@business)
     else
@@ -51,6 +55,7 @@ class Api::V1::BusinessesController < ApplicationController
   end
   
   def destroy
+    authorize! :destroy, @business
     @business.destroy
     head :no_content
   end
@@ -61,6 +66,7 @@ class Api::V1::BusinessesController < ApplicationController
   end
   
   def analytics
+    authorize! :read, Analytic
     business = current_user.businesses.find(params[:id])
     
     analytics_data = {

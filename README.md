@@ -17,6 +17,11 @@ rails server -p 3001
 
 API runs on `http://localhost:3001`
 
+**Default admin account:**
+- Email: `admin@preferreddeals.com`
+- Password: `password123`
+- ⚠️ **Change this password immediately in production!**
+
 ---
 
 ## 🔧 Configuration

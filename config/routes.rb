@@ -28,12 +28,32 @@ Rails.application.routes.draw do
       resources :saved_deals, only: [:index, :create, :destroy]
       post 'saved_deals/toggle', to: 'saved_deals#toggle'
       
+      # User profile routes
+      get 'users/profile', to: 'users#profile'
+      patch 'users/profile', to: 'users#update_profile'
+      patch 'users/password', to: 'users#update_password'
+      delete 'users/account', to: 'users#destroy_account'
+      
+      # Distribution partner routes
+      namespace :distribution do
+        get 'dashboard', to: 'distribution#dashboard'
+        get 'businesses', to: 'distribution#businesses'
+        get 'white_label', to: 'distribution#get_white_label'
+        patch 'white_label', to: 'distribution#update_white_label'
+        get 'stats', to: 'distribution#stats'
+      end
+      
       # Admin routes
       namespace :admin do
         get 'stats', to: 'admin#stats'
         get 'users', to: 'admin#users'
         get 'businesses', to: 'admin#businesses'
+        get 'pending_approvals', to: 'admin#pending_approvals'
         patch 'businesses/:id/feature', to: 'admin#toggle_featured'
+        patch 'businesses/:id/approve', to: 'admin#approve_business'
+        patch 'businesses/:id/reject', to: 'admin#reject_business'
+        patch 'users/:id/suspend', to: 'admin#suspend_user'
+        patch 'users/:id/activate', to: 'admin#activate_user'
         delete 'users/:id', to: 'admin#destroy_user'
         delete 'businesses/:id', to: 'admin#destroy_business'
       end
