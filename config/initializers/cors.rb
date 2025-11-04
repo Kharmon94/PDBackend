@@ -7,11 +7,14 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    # Allow requests from localhost for development
+    # Allow requests from production domains
     origins 'https://www.preferred.deals', 'https://preferred.deals'
     
     # Allow requests from Railway domains
     origins /.*\.railway\.app$/, /.*\.railway\.dev$/
+    
+    # Allow requests from localhost for development
+    origins 'http://localhost:3000', 'http://localhost:5173'
 
     resource "*",
       headers: :any,
