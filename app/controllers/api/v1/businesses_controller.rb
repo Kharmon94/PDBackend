@@ -1,25 +1,21 @@
 class Api::V1::BusinessesController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:index, :show, :track_click]
+  skip_before_action :authenticate_user!, only: [:index, :show, :track_click, :autocomplete]
   before_action :authenticate_user!, only: [:create, :update, :destroy, :my_businesses, :analytics]
   before_action :set_business, only: [:show, :update, :destroy, :analytics]
   
   # CanCanCan authorization
-  load_and_authorize_resource except: [:index, :track_click, :my_businesses, :analytics]
+  load_and_authorize_resource except: [:index, :track_click, :my_businesses, :analytics, :autocomplete]
   
   def index
     businesses = Business.includes(:user)
     
+    # Full-text search (replaces simple ILIKE)
+    if params[:search].present?
+      businesses = businesses.search_full_text(params[:search])
+    end
+    
     # Filter by category
     businesses = businesses.by_category(params[:category]) if params[:category].present?
-    
-    # Filter by search query
-    if params[:search].present?
-      businesses = businesses.where(
-        "name ILIKE ? OR description ILIKE ?", 
-        "%#{params[:search]}%", 
-        "%#{params[:search]}%"
-      )
-    end
     
     # Filter by featured
     businesses = businesses.featured if params[:featured] == 'true'
@@ -27,7 +23,28 @@ class Api::V1::BusinessesController < ApplicationController
     # Filter by deals
     businesses = businesses.with_deals if params[:deals] == 'true'
     
+    # Limit for autocomplete
+    businesses = businesses.limit(params[:limit].to_i) if params[:limit].present?
+    
     render json: businesses.map { |business| business_json(business) }
+  end
+  
+  def autocomplete
+    query = params[:query]
+    return render json: [] if query.blank? || query.length < 2
+    
+    suggestions = Business.search_full_text(query)
+                         .limit(10)
+                         .pluck(:name, :category, :address)
+                         .map do |name, category, address|
+      {
+        name: name,
+        category: category,
+        location: address.split(',').last&.strip
+      }
+    end
+    
+    render json: suggestions
   end
   
   def show

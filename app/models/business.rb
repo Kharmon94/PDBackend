@@ -18,6 +18,29 @@ class Business < ApplicationRecord
   scope :pending_approval, -> { where(approval_status: 'pending') }
   scope :approved, -> { where(approval_status: 'approved') }
   
+  # Full-text search across name, description, category, address, and deals
+  scope :search_full_text, ->(query) {
+    return all if query.blank?
+    
+    sanitized_query = ActiveRecord::Base.sanitize_sql_like(query)
+    
+    where(
+      "to_tsvector('english', coalesce(name, '') || ' ' || 
+       coalesce(description, '') || ' ' || 
+       coalesce(category, '') || ' ' || 
+       coalesce(address, '') || ' ' || 
+       coalesce(deal_description, '')) @@ plainto_tsquery('english', ?)",
+      query
+    ).order(
+      Arel.sql("ts_rank(to_tsvector('english', coalesce(name, '') || ' ' || 
+                coalesce(description, '') || ' ' || 
+                coalesce(category, '') || ' ' || 
+                coalesce(address, '') || ' ' || 
+                coalesce(deal_description, '')), 
+                plainto_tsquery('english', '#{sanitized_query}')) DESC")
+    )
+  }
+  
   def increment_view_count!
     analytics.create!(event_type: 'view', event_data: { timestamp: Time.current })
   end

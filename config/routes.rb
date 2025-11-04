@@ -15,6 +15,7 @@ Rails.application.routes.draw do
       post 'auth/logout', to: 'auth#logout'
       
       # Business routes
+      get 'businesses/autocomplete', to: 'businesses#autocomplete'
       resources :businesses, only: [:index, :show, :create, :update, :destroy] do
         member do
           post 'track_click'
