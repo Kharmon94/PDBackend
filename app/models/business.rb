@@ -18,6 +18,9 @@ class Business < ApplicationRecord
   scope :pending_approval, -> { where(approval_status: 'pending') }
   scope :approved, -> { where(approval_status: 'approved') }
   
+  # Clear cache when business is created/updated/deleted
+  after_commit :clear_cache
+  
   # Full-text search across name, description, category, address, and deals
   scope :search_full_text, ->(query) {
     return all if query.blank?
@@ -55,5 +58,16 @@ class Business < ApplicationRecord
   
   def weekly_clicks
     analytics.where(event_type: 'click', created_at: 1.week.ago..Time.current).count
+  end
+  
+  private
+  
+  def clear_cache
+    # Clear all business-related caches when any business changes
+    Rails.cache.delete_matched("businesses/*")
+    Rails.cache.delete_matched("autocomplete/*")
+  rescue => e
+    # Don't let cache clearing errors break the app
+    Rails.logger.error "Failed to clear cache: #{e.message}"
   end
 end

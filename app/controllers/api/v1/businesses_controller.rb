@@ -7,24 +7,29 @@ class Api::V1::BusinessesController < ApplicationController
   load_and_authorize_resource except: [:index, :track_click, :my_businesses, :analytics, :autocomplete]
   
   def index
-    businesses = Business.includes(:user)
+    # Create cache key from query parameters
+    cache_key = ['businesses', params[:search], params[:category], params[:featured], params[:deals], params[:limit]].compact.join('/')
     
-    # Full-text search (replaces simple ILIKE)
-    if params[:search].present?
-      businesses = businesses.search_full_text(params[:search])
+    businesses = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      result = Business.includes(:user)
+      
+      # Full-text search
+      result = result.search_full_text(params[:search]) if params[:search].present?
+      
+      # Filter by category
+      result = result.by_category(params[:category]) if params[:category].present?
+      
+      # Filter by featured
+      result = result.featured if params[:featured] == 'true'
+      
+      # Filter by deals
+      result = result.with_deals if params[:deals] == 'true'
+      
+      # Limit for autocomplete
+      result = result.limit(params[:limit].to_i) if params[:limit].present?
+      
+      result.to_a
     end
-    
-    # Filter by category
-    businesses = businesses.by_category(params[:category]) if params[:category].present?
-    
-    # Filter by featured
-    businesses = businesses.featured if params[:featured] == 'true'
-    
-    # Filter by deals
-    businesses = businesses.with_deals if params[:deals] == 'true'
-    
-    # Limit for autocomplete
-    businesses = businesses.limit(params[:limit].to_i) if params[:limit].present?
     
     render json: businesses.map { |business| business_json(business) }
   end
@@ -33,15 +38,20 @@ class Api::V1::BusinessesController < ApplicationController
     query = params[:query]
     return render json: [] if query.blank? || query.length < 2
     
-    suggestions = Business.search_full_text(query)
-                         .limit(10)
-                         .pluck(:name, :category, :address)
-                         .map do |name, category, address|
-      {
-        name: name,
-        category: category,
-        location: address.split(',').last&.strip
-      }
+    # Normalize query for consistent caching
+    cache_key = "autocomplete/#{query.downcase.strip}"
+    
+    suggestions = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+      Business.search_full_text(query)
+             .limit(10)
+             .pluck(:name, :category, :address)
+             .map do |name, category, address|
+        {
+          name: name,
+          category: category,
+          location: address.split(',').last&.strip
+        }
+      end
     end
     
     render json: suggestions
