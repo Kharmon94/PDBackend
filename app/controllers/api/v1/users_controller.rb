@@ -74,7 +74,8 @@ class Api::V1::UsersController < ApplicationController
       name: user.name,
       email: user.email,
       user_type: user.user_type,
-      avatar: avatar_url,
+      avatar_url: avatar_url,  # Use avatar_url for consistency with frontend
+      avatar: avatar_url,       # Keep avatar as alias for backward compatibility
       created_at: user.created_at,
       businesses_count: user.businesses.count,
       saved_deals_count: user.saved_deals.count
