@@ -125,11 +125,57 @@ class Api::V1::BusinessesController < ApplicationController
     params.require(:business).permit(
       :name, :category, :description, :address, :phone, :email, :website,
       :image_url, :featured, :has_deals, :deal_description, :rating, :review_count,
+      :image, gallery_images: [],
       hours: {}, amenities: [], gallery: []
     )
   end
   
   def business_json(business)
+    # Get image URL from Active Storage or fallback to image_url
+    # Rails will automatically generate S3 signed URLs in production or local routes in development
+    image_url = if business.image.attached?
+      begin
+        # Use url_for which Rails handles automatically (S3 signed URLs in production, local routes in dev)
+        # For local storage, we need to provide the host
+        if Rails.env.production?
+          # S3: url_for automatically generates signed S3 URL
+          url_for(business.image)
+        else
+          # Local: use rails_blob_url with request host for full URL
+          host = "#{request.protocol}#{request.host_with_port}"
+          Rails.application.routes.url_helpers.rails_blob_url(business.image, host: host)
+        end
+      rescue => e
+        Rails.logger.error "Failed to generate image URL: #{e.message}"
+        business.image_url
+      end
+    else
+      business.image_url
+    end
+    
+    # Get gallery URLs from Active Storage or fallback to gallery JSON
+    gallery_urls = if business.gallery_images.attached?
+      host = Rails.env.production? ? nil : "#{request.protocol}#{request.host_with_port}"
+      business.gallery_images.map do |img|
+        begin
+          if Rails.env.production?
+            # S3: url_for automatically generates signed S3 URL
+            url_for(img)
+          else
+            # Local: use rails_blob_url with request host for full URL
+            Rails.application.routes.url_helpers.rails_blob_url(img, host: host)
+          end
+        rescue => e
+          Rails.logger.error "Failed to generate gallery image URL: #{e.message}"
+          nil
+        end
+      end.compact
+    elsif business.gallery.present? && business.gallery.is_a?(Array)
+      business.gallery
+    else
+      []
+    end
+    
     {
       id: business.id,
       name: business.name,
@@ -141,13 +187,13 @@ class Api::V1::BusinessesController < ApplicationController
       website: business.website,
       rating: business.rating,
       review_count: business.review_count,
-      image: business.image_url,
+      image: image_url,
       featured: business.featured,
       has_deals: business.has_deals,
       deal: business.deal_description,
       hours: business.hours,
       amenities: business.amenities,
-      gallery: business.gallery,
+      gallery: gallery_urls,
       user: {
         id: business.user.id,
         name: business.user.name

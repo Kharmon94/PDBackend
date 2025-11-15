@@ -45,15 +45,36 @@ class Api::V1::UsersController < ApplicationController
   private
 
   def profile_params
-    params.require(:user).permit(:name, :email)
+    params.require(:user).permit(:name, :email, :avatar)
   end
 
   def user_json(user)
+    # Get avatar URL from Active Storage if attached
+    # Rails will automatically generate S3 signed URLs in production or local routes in development
+    avatar_url = if user.avatar.attached?
+      begin
+        if Rails.env.production?
+          # S3: url_for automatically generates signed S3 URL
+          url_for(user.avatar)
+        else
+          # Local: use rails_blob_url with request host for full URL
+          host = "#{request.protocol}#{request.host_with_port}"
+          Rails.application.routes.url_helpers.rails_blob_url(user.avatar, host: host)
+        end
+      rescue => e
+        Rails.logger.error "Failed to generate avatar URL: #{e.message}"
+        nil
+      end
+    else
+      nil
+    end
+    
     {
       id: user.id,
       name: user.name,
       email: user.email,
       user_type: user.user_type,
+      avatar: avatar_url,
       created_at: user.created_at,
       businesses_count: user.businesses.count,
       saved_deals_count: user.saved_deals.count

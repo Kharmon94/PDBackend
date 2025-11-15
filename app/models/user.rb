@@ -11,6 +11,9 @@ class User < ApplicationRecord
   belongs_to :suspended_by, class_name: 'User', optional: true
   has_one :white_label, dependent: :destroy
   
+  # Active Storage attachment for avatar
+  has_one_attached :avatar
+  
   scope :active, -> { where(suspended: false) }
   scope :suspended, -> { where(suspended: true) }
   

@@ -5,6 +5,10 @@ class Business < ApplicationRecord
   has_many :saved_by_users, through: :saved_deals, source: :user
   has_many :analytics, dependent: :destroy
   
+  # Active Storage attachments
+  has_one_attached :image
+  has_many_attached :gallery_images
+  
   validates :name, presence: true
   validates :category, presence: true
   validates :address, presence: true
@@ -58,6 +62,26 @@ class Business < ApplicationRecord
   
   def weekly_clicks
     analytics.where(event_type: 'click', created_at: 1.week.ago..Time.current).count
+  end
+  
+  # Helper method to get image URL (Active Storage or fallback to image_url)
+  def image_url_or_attached
+    if image.attached?
+      Rails.application.routes.url_helpers.rails_blob_path(image, only_path: true)
+    else
+      image_url
+    end
+  end
+  
+  # Helper method to get gallery URLs (Active Storage or fallback to gallery JSON)
+  def gallery_urls
+    if gallery_images.attached?
+      gallery_images.map { |img| Rails.application.routes.url_helpers.rails_blob_path(img, only_path: true) }
+    elsif gallery.present? && gallery.is_a?(Array)
+      gallery
+    else
+      []
+    end
   end
   
   private
