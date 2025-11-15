@@ -14,7 +14,8 @@ class Api::V1::AdminController < ApplicationController
       businesses_with_deals: Business.where(has_deals: true).count,
       total_saved_deals: SavedDeal.count,
       recent_signups: User.where('created_at >= ?', 7.days.ago).count,
-      recent_businesses: Business.where('created_at >= ?', 7.days.ago).count
+      recent_businesses: Business.where('created_at >= ?', 7.days.ago).count,
+      pending_approvals: Business.where(approval_status: 'pending').count
     }
     
     render json: stats
