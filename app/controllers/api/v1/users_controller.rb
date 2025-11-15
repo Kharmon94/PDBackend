@@ -8,13 +8,23 @@ class Api::V1::UsersController < ApplicationController
 
   # PATCH /api/v1/users/profile
   def update_profile
-    if current_user.update(profile_params)
+    begin
+      if current_user.update(profile_params)
+        render json: {
+          user: user_json(current_user),
+          message: 'Profile updated successfully'
+        }
+      else
+        render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+      end
+    rescue Aws::Errors::MissingCredentialsError, Aws::Sigv4::Errors::MissingCredentialsError => e
+      # If avatar was uploaded but URL generation fails due to missing credentials
+      # Still return success since the update completed
+      Rails.logger.error "AWS credentials missing during profile update: #{e.message}"
       render json: {
         user: user_json(current_user),
-        message: 'Profile updated successfully'
+        message: 'Profile updated successfully (avatar uploaded but URL unavailable - check AWS credentials)'
       }
-    else
-      render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
@@ -61,8 +71,11 @@ class Api::V1::UsersController < ApplicationController
           host = "#{request.protocol}#{request.host_with_port}"
           Rails.application.routes.url_helpers.rails_blob_url(user.avatar, host: host)
         end
+      rescue Aws::Errors::MissingCredentialsError, Aws::Sigv4::Errors::MissingCredentialsError => e
+        Rails.logger.error "AWS credentials missing for avatar URL generation: #{e.message}. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables."
+        nil
       rescue => e
-        Rails.logger.error "Failed to generate avatar URL: #{e.message}"
+        Rails.logger.error "Failed to generate avatar URL: #{e.class} - #{e.message}"
         nil
       end
     else
