@@ -49,19 +49,17 @@ Rails.application.routes.draw do
       end
       
       # Admin routes
-      namespace :admin do
-        get 'stats', to: 'admin#stats'
-        get 'users', to: 'admin#users'
-        get 'businesses', to: 'admin#businesses'
-        get 'pending_approvals', to: 'admin#pending_approvals'
-        patch 'businesses/:id/feature', to: 'admin#toggle_featured'
-        patch 'businesses/:id/approve', to: 'admin#approve_business'
-        patch 'businesses/:id/reject', to: 'admin#reject_business'
-        patch 'users/:id/suspend', to: 'admin#suspend_user'
-        patch 'users/:id/activate', to: 'admin#activate_user'
-        delete 'users/:id', to: 'admin#destroy_user'
-        delete 'businesses/:id', to: 'admin#destroy_business'
-      end
+      get 'admin/stats', to: 'admin#stats'
+      get 'admin/users', to: 'admin#users'
+      get 'admin/businesses', to: 'admin#businesses'
+      get 'admin/pending_approvals', to: 'admin#pending_approvals'
+      patch 'admin/businesses/:id/feature', to: 'admin#toggle_featured'
+      patch 'admin/businesses/:id/approve', to: 'admin#approve_business'
+      patch 'admin/businesses/:id/reject', to: 'admin#reject_business'
+      patch 'admin/users/:id/suspend', to: 'admin#suspend_user'
+      patch 'admin/users/:id/activate', to: 'admin#activate_user'
+      delete 'admin/users/:id', to: 'admin#destroy_user'
+      delete 'admin/businesses/:id', to: 'admin#destroy_business'
     end
   end
 
