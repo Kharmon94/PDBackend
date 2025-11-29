@@ -240,7 +240,7 @@ class Api::V1::AdminController < ApplicationController
       id: distributor.id,
       name: distributor.name,
       email: distributor.email,
-      phone: distributor.phone || 'N/A',
+      phone: 'N/A', # Users don't have phone field - could be added from first business if needed
       status: distributor.suspended ? 'Suspended' : 'Active',
       contactPerson: distributor.name,
       subdomain: white_label&.subdomain || 'N/A',
