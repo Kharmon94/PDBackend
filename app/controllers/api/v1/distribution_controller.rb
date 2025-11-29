@@ -110,6 +110,9 @@ class Api::V1::DistributionController < ApplicationController
       featured: business.featured,
       has_deals: business.has_deals,
       deal: business.deal_description,
+      approval_status: business.approval_status,
+      created_at: business.created_at,
+      updated_at: business.updated_at,
       user: {
         id: business.user.id,
         name: business.user.name
