@@ -53,6 +53,7 @@ Rails.application.routes.draw do
       get 'admin/users', to: 'admin#users'
       get 'admin/businesses', to: 'admin#businesses'
       get 'admin/pending_approvals', to: 'admin#pending_approvals'
+      get 'admin/distributors', to: 'admin#distributors'
       patch 'admin/businesses/:id/feature', to: 'admin#toggle_featured'
       patch 'admin/businesses/:id/approve', to: 'admin#approve_business'
       patch 'admin/businesses/:id/reject', to: 'admin#reject_business'

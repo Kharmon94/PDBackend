@@ -178,6 +178,15 @@ class Api::V1::AdminController < ApplicationController
     }
   end
 
+  # GET /api/v1/admin/distributors
+  def distributors
+    distributors = User.where(user_type: 'distribution').includes(:white_label, :businesses)
+    
+    render json: {
+      distributors: distributors.map { |distributor| distributor_json(distributor) }
+    }
+  end
+
   private
   
   def check_admin_access
@@ -220,6 +229,29 @@ class Api::V1::AdminController < ApplicationController
         name: business.user.name,
         user_type: business.user.user_type
       }
+    }
+  end
+
+  def distributor_json(distributor)
+    white_label = distributor.white_label
+    businesses = distributor.businesses
+    
+    {
+      id: distributor.id,
+      name: distributor.name,
+      email: distributor.email,
+      phone: distributor.phone || 'N/A',
+      status: distributor.suspended ? 'Suspended' : 'Active',
+      contactPerson: distributor.name,
+      subdomain: white_label&.subdomain || 'N/A',
+      customDomain: white_label&.domain,
+      primaryColor: white_label&.primary_color || '#000000',
+      secondaryColor: white_label&.secondary_color || '#FFFFFF',
+      totalBusinesses: businesses.count,
+      pendingApprovals: businesses.where(approval_status: 'pending').count,
+      activeDeals: businesses.where(has_deals: true).count,
+      communityMembers: 0, # Placeholder for future community members feature
+      createdAt: distributor.created_at
     }
   end
 end
